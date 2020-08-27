@@ -32,10 +32,10 @@ public class StreamAssignment {
         integers.stream().forEach(System.out::println);
     }
 
+
     /**
      * Turning people into a Stream count all members
      */
-
     @Test
     public void task2() {
         long amount = people.stream().count();
@@ -43,10 +43,10 @@ public class StreamAssignment {
         assertEquals(10000, amount);
     }
 
+
     /**
      * Count all people that has Andersson as lastName.
      */
-
     @Test
     public void task3() {
         int expected = 90;
@@ -56,6 +56,7 @@ public class StreamAssignment {
 
         assertEquals(expected, amount);
     }
+
 
     /**
      * Extract a list of all female
@@ -70,6 +71,7 @@ public class StreamAssignment {
         assertNotNull(females);
         assertEquals(expectedSize, females.size());
     }
+
 
     /**
      * Extract a TreeSet with all birthDates
@@ -86,6 +88,7 @@ public class StreamAssignment {
         assertEquals(expectedSize, dates.size());
     }
 
+
     /**
      * Extract an array of all people named "Erik"
      */
@@ -99,6 +102,7 @@ public class StreamAssignment {
         assertNotNull(result);
         assertEquals(expectedLength, result.length);
     }
+
 
     /**
      * Find a person that has id of 5436
@@ -116,6 +120,7 @@ public class StreamAssignment {
         assertEquals(expected, optional.get());
     }
 
+
     /**
      * Using min() define a comparator that extracts the oldest person i the list as an Optional
      */
@@ -129,6 +134,7 @@ public class StreamAssignment {
         assertNotNull(optional);
         assertEquals(expectedBirthDate, optional.get().getDateOfBirth());
     }
+
 
     /**
      * Map each person born before 1920-01-01 into a PersonDto object then extract to a List
@@ -147,6 +153,7 @@ public class StreamAssignment {
         assertEquals(expectedSize, dtoList.size());
     }
 
+
     /**
      * In a Stream Filter out one person with id 5914 from people and take the birthdate and build a string from data that the date contains then
      * return the string.
@@ -155,7 +162,6 @@ public class StreamAssignment {
     public void task10(){
         String expected = "WEDNESDAY 19 DECEMBER 2012";
         int personId = 5914;
-        String shortcut = "p.getDateOfBirth()";
 
         Optional<String> optional = people.stream()
                 .filter(p -> p.getPersonId() == personId)
@@ -169,38 +175,45 @@ public class StreamAssignment {
         assertEquals(expected, optional.get());
     }
 
-//    /**
-//     * Get average age of all People by turning people into a stream and use defined ToIntFunction personToAge
-//     * changing type of stream to an IntStream.
-//     */
-//    @Test
-//    public void task11(){
-//        ToIntFunction<Person> personToAge =
-//                person -> Period.between(person.getDateOfBirth(), LocalDate.parse("2019-12-20")).getYears();
-//        double expected = 54.42;
-//        double averageAge = 0;
-//
-//        //Write code here
-//
-//        assertTrue(averageAge > 0);
-//        assertEquals(expected, averageAge, .01);
-//    }
-//
-//    /**
-//     * Extract from people a sorted string array of all firstNames that are palindromes. No duplicates
-//     */
-//    @Test
-//    public void task12(){
-//        String[] expected = {"Ada", "Ana", "Anna", "Ava", "Aya", "Bob", "Ebbe", "Efe", "Eje", "Elle", "Hannah", "Maram", "Natan", "Otto"};
-//
-//        String[] result = null;
-//
-//        //Write code here
-//
-//        assertNotNull(result);
-//        assertArrayEquals(expected, result);
-//    }
-//
+
+    /**
+     * Get average age of all People by turning people into a stream and use defined ToIntFunction personToAge
+     * changing type of stream to an IntStream.
+     */
+    @Test
+    public void task11(){
+        ToIntFunction<Person> personToAge =
+                person -> Period.between(person.getDateOfBirth(), LocalDate.parse("2019-12-20")).getYears();
+        double expected = 54.42;
+        double averageAge = 0;
+
+        averageAge = people.stream() // Note, found two other solutions to this task
+                .mapToInt(personToAge)
+                .average().getAsDouble();
+
+        assertTrue(averageAge > 0);
+        assertEquals(expected, averageAge, .01);
+    }
+
+
+    /**
+     * Extract from people a sorted string array of all firstNames that are palindromes. No duplicates
+     */
+    @Test
+    public void task12(){
+        String[] expected = {"Ada", "Ana", "Anna", "Ava", "Aya", "Bob", "Ebbe", "Efe", "Eje", "Elle", "Hannah", "Maram", "Natan", "Otto"};
+
+        String[] result = people.stream()
+                .filter(p -> p.getFirstName().equalsIgnoreCase(new StringBuilder(p.getFirstName()).reverse().toString())) // Filter persons that have palindrome names
+                .map(Person::getFirstName) // Only keep the first names
+                .distinct() // Remove duplicate names
+                .sorted() // Sort elements
+                .toArray(String[]::new); // Convert to string array
+
+        assertNotNull(result);
+        assertArrayEquals(expected, result);
+    }
+
 //    /**
 //     * Extract from people a map where each key is a last name with a value containing a list of all that has that lastName
 //     */
