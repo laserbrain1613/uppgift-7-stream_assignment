@@ -1,5 +1,7 @@
 package se.lexicon.vxo.service;
 
+//import jdk.vm.ci.meta.Local;
+
 import org.junit.jupiter.api.Test;
 import se.lexicon.vxo.model.Gender;
 import se.lexicon.vxo.model.Person;
@@ -10,6 +12,7 @@ import java.time.Period;
 import java.util.*;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -93,7 +96,7 @@ public class StreamAssignment {
      * Extract an array of all people named "Erik"
      */
     @Test
-    public void task6(){
+    public void task6() {
         int expectedLength = 3;
         Person[] result = people.stream()
                 .filter(p -> p.getFirstName().equalsIgnoreCase("Erik"))
@@ -108,7 +111,7 @@ public class StreamAssignment {
      * Find a person that has id of 5436
      */
     @Test
-    public void task7(){
+    public void task7() {
         Person expected = new Person(5436, "Tea", "Håkansson", LocalDate.parse("1968-01-25"), Gender.FEMALE);
 
         Optional<Person> optional = people.stream()
@@ -125,7 +128,7 @@ public class StreamAssignment {
      * Using min() define a comparator that extracts the oldest person i the list as an Optional
      */
     @Test
-    public void task8(){
+    public void task8() {
         LocalDate expectedBirthDate = LocalDate.parse("1910-01-02");
 
         Optional<Person> optional = people.stream()
@@ -140,13 +143,13 @@ public class StreamAssignment {
      * Map each person born before 1920-01-01 into a PersonDto object then extract to a List
      */
     @Test
-    public void task9(){
+    public void task9() {
         int expectedSize = 892;
         LocalDate date = LocalDate.parse("1920-01-01");
 
         List<PersonDto> dtoList = people.stream()
                 .filter(p -> p.getDateOfBirth().isBefore(date))
-                .map(dto -> new PersonDto(dto.getPersonId(), (dto.getFirstName() + " " + dto.getLastName()) ) )
+                .map(dto -> new PersonDto(dto.getPersonId(), (dto.getFirstName() + " " + dto.getLastName())))
                 .collect(Collectors.toList());
 
         assertNotNull(dtoList);
@@ -159,7 +162,7 @@ public class StreamAssignment {
      * return the string.
      */
     @Test
-    public void task10(){
+    public void task10() {
         String expected = "WEDNESDAY 19 DECEMBER 2012";
         int personId = 5914;
 
@@ -181,18 +184,21 @@ public class StreamAssignment {
      * changing type of stream to an IntStream.
      */
     @Test
-    public void task11(){
+    public void task11() {
         ToIntFunction<Person> personToAge =
                 person -> Period.between(person.getDateOfBirth(), LocalDate.parse("2019-12-20")).getYears();
         double expected = 54.42;
         double averageAge = 0;
 
-        averageAge = people.stream() // Note, found two other solutions to this task
-                .mapToInt(personToAge)
-                .average().getAsDouble();
+        averageAge = people.stream()
+                .mapToInt(personToAge) // Maps integers (whole years)
+                .average().orElse(0.0d); // .average is OptionalDouble
+
+//        .collect(Collectors.averagingInt(personToAge));                                                   // Alternate solution
+//        averageAge = (double) people.stream().mapToInt(personToAge).sum() / people.stream().count();      // Alternate solution
 
         assertTrue(averageAge > 0);
-        assertEquals(expected, averageAge, .01);
+        assertEquals(expected, averageAge, .01); // Delta .01 allows for two decimals of round error margin (averageAge = 54.4125)
     }
 
 
@@ -200,7 +206,7 @@ public class StreamAssignment {
      * Extract from people a sorted string array of all firstNames that are palindromes. No duplicates
      */
     @Test
-    public void task12(){
+    public void task12() {
         String[] expected = {"Ada", "Ana", "Anna", "Ava", "Aya", "Bob", "Ebbe", "Efe", "Eje", "Elle", "Hannah", "Maram", "Natan", "Otto"};
 
         String[] result = people.stream()
@@ -214,34 +220,52 @@ public class StreamAssignment {
         assertArrayEquals(expected, result);
     }
 
-//    /**
-//     * Extract from people a map where each key is a last name with a value containing a list of all that has that lastName
-//     */
-//    @Test
-//    public void task13(){
-//        int expectedSize = 107;
-//        Map<String, List<Person>> personMap = null;
-//
-//        //Write code here
-//
-//        assertNotNull(personMap);
-//        assertEquals(expectedSize, personMap.size());
-//    }
-//
-//    /**
-//     * Create a calendar using Stream.iterate of year 2020. Extract to a LocalDate array
-//     */
-//    @Test
-//    public void task14(){
-//        LocalDate[] _2020_dates = null;
-//
-//        //Write code here
-//
-//
-//        assertNotNull(_2020_dates);
-//        assertEquals(366, _2020_dates.length);
-//        assertEquals(LocalDate.parse("2020-01-01"), _2020_dates[0]);
-//        assertEquals(LocalDate.parse("2020-12-31"), _2020_dates[_2020_dates.length-1]);
-//    }
+
+    /**
+     * Extract from people a map where each key is a last name with a value containing a list of all that has that lastName
+     */
+    @Test
+    public void task13() {
+        int expectedSize = 107;
+        Map<String, List<Person>> personMap = null;
+
+        personMap = people.stream()
+                .collect(Collectors.groupingBy(Person::getLastName));
+
+// Messier solution ----------------
+//        personMap = new HashMap<>();
+//        List<String> keys = people.stream()
+//                .map(Person::getLastName) // Maps all last names
+//                .distinct() // Removes duplicate last names
+//                .collect(Collectors.toList()); // Collects last names that will be used as keys
+//        for (String key : keys) {
+//            List<Person> result = people.stream().filter(person -> person.getLastName().equalsIgnoreCase(key)) // Filter by current iterated key name
+//                    .collect(Collectors.toList());
+//            personMap.put(key, result); // Adds people by key
+//        }
+// ----------------
+
+        assertNotNull(personMap);
+        assertEquals(expectedSize, personMap.size());
+    }
+
+
+    /**
+     * Create a calendar using Stream.iterate of year 2020. Extract to a LocalDate array
+     */
+    @Test
+    public void task14() {
+        LocalDate[] _2020_dates = null;
+
+        _2020_dates = Stream.iterate(LocalDate.of(2020, 1, 1), itr -> itr.plusDays(1))
+                .limit(LocalDate.ofYearDay(2020, 1).isLeapYear() ? 366 : 365) // 2020 is a leap year, which gives us an extra day
+//                .peek(System.out::println)
+                .toArray(LocalDate[]::new);
+
+        assertNotNull(_2020_dates);
+        assertEquals(366, _2020_dates.length);
+        assertEquals(LocalDate.parse("2020-01-01"), _2020_dates[0]);
+        assertEquals(LocalDate.parse("2020-12-31"), _2020_dates[_2020_dates.length - 1]);
+    }
 
 }
